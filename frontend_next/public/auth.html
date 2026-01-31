@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизация через Telegram</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: white;
+            max-width: 400px;
+            width: 100%;
+        }
+        #telegram-login-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Авторизация через Telegram</h2>
+        <div id="telegram-login-container">
+            <!-- Telegram Login Button will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // Функция, которая будет вызвана при успешной аутентификации
+        function onTelegramAuth(user) {
+            console.log('Telegram auth success:', user);
+            
+            // Отправляем данные на наш backend
+            fetch('/auth/telegram/callback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    id: user.id,
+                    first_name: user.first_name || '',
+                    last_name: user.last_name || '',
+                    username: user.username || '',
+                    photo_url: user.photo_url || '',  // Always include, even if empty
+                    auth_date: user.auth_date,
+                    hash: user.hash
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.access_token) {
+                    // Отправляем токен в родительское окно
+                    window.opener.postMessage({
+                        type: 'TELEGRAM_AUTH_SUCCESS',
+                        token: data.access_token
+                    }, '*');
+                    
+                    // Закрываем всплывающее окно
+                    window.close();
+                } else {
+                    console.error('Auth error:', data);
+                    alert('Ошибка авторизации: ' + (data.detail || JSON.stringify(data)));
+                }
+            })
+            .catch(error => {
+                console.error('Network error:', error);
+                alert('Произошла ошибка при соединении с сервером');
+            });
+        }
+
+        // Динамически добавляем виджет Telegram после загрузки страницы
+        window.addEventListener('load', function() {
+            // Создаем элемент script для виджета
+            const script = document.createElement('script');
+            script.src = 'https://telegram.org/js/telegram-widget.js?22';
+            script.setAttribute('data-telegram-login', 'tssvpn_bot');
+            script.setAttribute('data-size', 'large');
+            script.setAttribute('data-request-access', 'write');
+            script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+            script.setAttribute('data-lang', 'ru');
+            script.async = true;
+            
+            document.getElementById('telegram-login-container').appendChild(script);
+        });
+    </script>
+</body>
+</html>

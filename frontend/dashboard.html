@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личное Дело - ТссВПН</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="poster-container">
+        <header>
+            <h1>ЛИЧНЫЙ КАБИНЕТ</h1>
+        </header>
+
+        <nav>
+            <a href="index.html">Главная</a>
+            <a href="shop.html">Склад</a>
+            <a href="keys.html">Ключи</a>
+            <a href="#" onclick="logout(); return false;">Выход</a>
+        </nav>
+
+        <main>
+            <div id="loading" class="h-center">Загрузка досье...</div>
+
+            <div id="dashboard-content" class="hidden">
+                <div class="content-box dossier">
+                    <h2 class="h-center"
+                        style="margin-bottom: 20px; font-family: var(--font-body); text-decoration: underline;">ЛИЧНАЯ
+                        КАРТОЧКА</h2>
+
+                    <div
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; padding: 0 20px;">
+                        <div>
+                            <p>ПОЗЫВНОЙ:</p>
+                            <p class="data-field" id="username">---</p>
+                        </div>
+                        <div>
+                            <p>СТАТУС:</p>
+                            <p class="data-field" id="status">---</p>
+                        </div>
+                        <div>
+                            <p>БАЛАНС:</p>
+                            <p class="data-field" style="color: var(--color-primary);"><span id="balance">0</span> ₽</p>
+                        </div>
+                        <div>
+                            <p>АКТИВНЫЕ КЛЮЧИ:</p>
+                            <p class="data-field" id="keys-count">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="shop-grid">
+                    <a href="keys.html" style="text-decoration: none;">
+                        <button class="secondary">МОИ КЛЮЧИ</button>
+                    </a>
+                    <a href="shop.html" style="text-decoration: none;">
+                        <button>ПРИОБРЕСТИ ПРОПУСК</button>
+                    </a>
+                    <a href="instructions.html" style="text-decoration: none;">
+                        <button class="secondary">ИНСТРУКТАЖ</button>
+                    </a>
+                    <a href="support.html" style="text-decoration: none;">
+                        <button class="secondary">СВЯЗЬ С ТЫЛОМ</button>
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        checkAuthProtection();
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            try {
+                const user = await api("/users/me", "GET", null, true);
+
+                document.getElementById("username").textContent = user.username.toUpperCase();
+                document.getElementById("status").textContent = user.status.toUpperCase();
+                document.getElementById("balance").textContent = user.balance;
+                document.getElementById("keys-count").textContent = user.keys_count;
+
+                document.getElementById("loading").classList.add("hidden");
+                document.getElementById("dashboard-content").classList.remove("hidden");
+            } catch (err) {
+                showError("Ошибка получения данных: " + err.message);
+                if (err.message.includes("401")) logout();
+            }
+        });
+    </script>
+    <style>
+        .dossier {
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ccc' fill-opacity='0.1'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z'/%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .data-field {
+            font-size: 1.5rem;
+            font-weight: bold;
+            font-family: var(--font-body);
+        }
+    </style>
+</body>
+
+</html>

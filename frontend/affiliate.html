@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Братство Уз - ТссВПН</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="poster-container">
+        <header>
+            <h1>БРАТСТВО УЗ</h1>
+        </header>
+
+        <nav>
+            <a href="dashboard.html">Кабинет</a>
+            <a href="shop.html">Склад</a>
+            <a href="#" onclick="logout(); return false;">Выход</a>
+        </nav>
+
+        <main>
+            <div class="content-box">
+                <p>Приводи новых бойцов — получай дополнительные пайки!</p>
+                <p>За каждого товарища: +10% к сроку службы.</p>
+
+                <div style="background: white; border: 3px solid var(--color-primary); padding: 20px; margin: 30px 0;">
+                    <h3>ВАША ССЫЛКА ВЕРБОВЩИКА</h3>
+                    <input type="text" value="https://tssvpn.com/?ref=USER123" readonly onclick="this.select()"
+                        style="text-align: center; font-size: 1.2rem;">
+                    <button class="secondary" onclick="alert('Ссылка скопирована!')">СКОПИРОВАТЬ</button>
+                </div>
+
+                <div class="dossier" style="padding: 20px; border: 2px solid var(--color-text);">
+                    <h3>СТАТИСТИКА</h3>
+                    <p>Приведено бойцов: 0</p>
+                    <p>Заработано дней: 0</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+    <script>checkAuthProtection();</script>
+</body>
+
+</html>

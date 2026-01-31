@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест авторизации через Telegram</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Тест авторизации через Telegram</h1>
+    <p>Нажмите кнопку ниже для тестирования авторизации:</p>
+    
+    <div id="login-container">
+        <script async src="https://telegram.org/js/telegram-widget.js?21" 
+            data-telegram-login="tssvpn_bot"
+            data-size="large"
+            data-request-access="write"
+            data-onauth="onTelegramAuth(user)"
+            data-lang="ru">
+        </script>
+    </div>
+
+    <div id="result" class="result" style="display:none;"></div>
+
+    <script>
+        function onTelegramAuth(user) {
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('result').className = 'result success';
+            document.getElementById('result').innerHTML = '<h3>Успешная авторизация!</h3><pre>' + JSON.stringify(user, null, 2) + '</pre>';
+            
+            // Отправляем данные на наш backend для проверки
+            fetch('/auth/telegram/callback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name || '',
+                    username: user.username || '',
+                    photo_url: user.photo_url || '',
+                    auth_date: user.auth_date,
+                    hash: user.hash
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok && data.access_token) {
+                    document.getElementById('result').innerHTML += '<p>Токен получен успешно!</p>';
+                } else {
+                    document.getElementById('result').className = 'result error';
+                    document.getElementById('result').innerHTML += '<p>Ошибка получения токена: ' + JSON.stringify(data) + '</p>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('result').className = 'result error';
+                document.getElementById('result').innerHTML += '<p>Ошибка: ' + error.message + '</p>';
+            });
+        }
+    </script>
+</body>
+</html>

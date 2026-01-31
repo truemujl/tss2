@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Связь с тылом - ТссВПН</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="poster-container">
+        <header>
+            <h1>СВЯЗЬ С ТЫЛОМ</h1>
+        </header>
+
+        <nav>
+            <a href="index.html">Главная</a>
+            <a href="instructions.html">Указания</a>
+            <a href="dashboard.html">Кабинет</a>
+        </nav>
+
+        <main>
+            <div class="content-box">
+                <p>Возникли проблемы с каналом связи?</p>
+                <p>Сообщите дежурному диспетчеру.</p>
+
+                <div style="margin: 40px 0;">
+                    <button onclick="window.location.href='https://t.me/placeholder_support'">
+                        НАПИСАТЬ В TELEGRAM
+                    </button>
+                </div>
+
+                <div class="form-section" style="max-width: 100%;">
+                    <h3>Рапорт о неисправности</h3>
+                    <form onsubmit="event.preventDefault(); alert('Рапорт отправлен в архив.');">
+                        <label>Тема рапорта</label>
+                        <input type="text" placeholder="Пример: Низкая скорость">
+
+                        <label>Описание</label>
+                        <textarea
+                            style="width: 100%; height: 100px; padding: 10px; border: 2px solid var(--color-text); background: #eee; font-family: var(--font-body); margin-bottom: 20px;"></textarea>
+
+                        <button type="submit" class="secondary">ОТПРАВИТЬ</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

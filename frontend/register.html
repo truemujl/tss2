@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация - ТссВПН</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="poster-container" style="max-width: 500px;">
+        <header>
+            <h1>ВЕРБОВКА</h1>
+        </header>
+
+        <main>
+            <div class="form-section">
+                <p class="h-center" style="margin-bottom: 20px;">Заполни личное дело</p>
+
+                <form id="register-form">
+                    <label for="username">Позывной (Логин)</label>
+                    <input type="text" id="username" name="username" required>
+
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" name="password" required>
+
+                    <label for="confirm-password">Подтверждение пароля</label>
+                    <input type="password" id="confirm-password" name="confirm-password" required>
+
+                    <span id="error-msg" class="error-msg hidden"></span>
+                    <span id="success-msg" class="success-msg hidden"></span>
+
+                    <button type="submit">Вступить</button>
+
+                    <div style="margin-top: 15px; text-align: center; font-size: 0.9rem;">
+                        <a href="login.html" style="color: var(--color-primary);">Уже в строю? Предъявить пропуск</a>
+                    </div>
+                </form>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="index.html" style="color: var(--color-text); text-decoration: underline;">Вернуться на
+                    главную</a>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.getElementById("register-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const username = e.target.username.value;
+            const password = e.target.password.value;
+            const confirmPassword = e.target["confirm-password"].value;
+
+            const errorMsg = document.getElementById("error-msg");
+            const successMsg = document.getElementById("success-msg");
+
+            errorMsg.classList.add("hidden");
+            successMsg.classList.add("hidden");
+
+            if (password !== confirmPassword) {
+                showError("Пароли не совпадают!", "error-msg");
+                errorMsg.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const data = await api("/auth/register", "POST", { username, password });
+                successMsg.textContent = "Товарищ принят в ряды! Перенаправление...";
+                successMsg.classList.remove("hidden");
+
+                setTimeout(() => {
+                    window.location.href = "login.html";
+                }, 2000);
+            } catch (err) {
+                showError(err.message, "error-msg");
+                errorMsg.classList.remove("hidden");
+            }
+        });
+    </script>
+</body>
+
+</html>

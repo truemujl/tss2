@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ТссВПН - Твоя Связь под Защитой</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="poster-container">
+        <header>
+            <h1>ТссВПН</h1>
+            <h2>ТВОЯ СВЯЗЬ ПОД ЗАЩИТОЙ!</h2>
+            <div id="telegram-login-container" style="margin: 20px 0;">
+                <script async src="https://telegram.org/js/telegram-widget.js?22" data-telegram-login="tssvpn_bot" data-size="large" data-auth-url="http://tss_site_backend:8000/auth/telegram/callback" data-request-access="write"></script>
+            </div>
+        </header>
+
+        <div class="ticker-wrap">
+            <div class="ticker">
+                <div class="ticker__item">::: ВНИМАНИЕ ВСЕМ ПОСТАМ ::: СВЯЗЬ ШИФРУЕТСЯ ::: ВРАГ ПОДСЛУШИВАЕТ ::: СОБЛЮДАЙТЕ ЦИФРОВУЮ ГИГИЕНУ ::: ДОСТУП РАЗРЕШЕН ТОЛЬКО ПО КЛЮЧАМ :::</div>
+            </div>
+        </div>
+
+        <nav>
+            <a href="index.html">Главная</a>
+            <a href="instructions.html">Указания</a>
+            <a href="support.html">Связь с тылом</a>
+            <span id="auth-links" style="display: contents;">
+                <a href="login.html">Вход</a>
+                <a href="register.html">Регистрация</a>
+            </span>
+            <span id="user-links" style="display: contents; display: none;">
+                <a href="dashboard.html">Личный Кабинет</a>
+                <a href="#" onclick="logout(); return false;">Выход</a>
+            </span>
+        </nav>
+
+        <main>
+            <div class="hero-image">
+                <div class="star-icon">★</div>
+            </div>
+
+            <div class="content-box">
+                <p style="font-size: 1.2rem; text-transform: uppercase;">ТОВАРИЩ! НЕ БОЛТАЙ!</p>
+                <p>Враг подслушивает. Используй надежный канал связи.</p>
+                <p>Автономный. Анонимный. Твой.</p>
+                
+                <div style="margin-top: 30px;">
+                    <a href="register.html" class="button-link">
+                        <button>Вступить в ряды</button>
+                    </a>
+                </div>
+            </div>
+
+            <div class="shop-grid" style="margin-top: 40px;">
+                <div class="plan-card">
+                    <div class="plan-title">РАЗВЕДЧИК</div>
+                    <div class="plan-price">100₽</div>
+                    <p>Пропуск на 1 месяц</p>
+                </div>
+                <div class="plan-card">
+                    <div class="plan-title">ОФИЦЕР</div>
+                    <div class="plan-price">250₽</div>
+                    <p>Пропуск на 3 месяца</p>
+                </div>
+                <div class="plan-card">
+                    <div class="plan-title">ГЕНЕРАЛ</div>
+                    <div class="plan-price">900₽</div>
+                    <p>Пропуск на 12 месяцев</p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>1917 - 2026 © ЦЕНТРАЛЬНЫЙ АРХИВ ТссВПН</p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            if (isLoggedIn()) {
+                document.getElementById("auth-links").style.display = "none";
+                document.getElementById("user-links").style.display = "contents";
+            } else {
+                document.getElementById("auth-links").style.display = "contents";
+                document.getElementById("user-links").style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>

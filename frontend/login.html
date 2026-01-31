@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - ТссВПН</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="poster-container" style="max-width: 500px;">
+        <header>
+            <h1>ПРОПУСКНОЙ ПУНКТ</h1>
+        </header>
+
+        <main>
+            <div class="login-section">
+                <!-- <h3 class="h-center">Предъявите документы</h3> -->
+                <p class="h-center" style="margin-bottom: 20px;">Вход только для уполномоченных лиц</p>
+
+                <form id="login-form">
+                    <label for="username">Позывной (Логин)</label>
+                    <input type="text" id="username" name="username" required>
+
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" name="password" required>
+
+                    <span id="error-msg" class="error-msg hidden"></span>
+
+                    <button type="submit">Войти</button>
+
+                    <div style="margin-top: 15px; text-align: center; font-size: 0.9rem;">
+                        <a href="register.html" style="color: var(--color-primary);">Нет пропуска? Записаться в
+                            добровольцы</a>
+                    </div>
+                </form>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="index.html" style="color: var(--color-text); text-decoration: underline;">Вернуться на
+                    главную</a>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.getElementById("login-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const username = e.target.username.value;
+            const password = e.target.password.value;
+            const errorMsg = document.getElementById("error-msg");
+
+            errorMsg.classList.add("hidden");
+
+            try {
+                const data = await api("/auth/login", "POST", { username, password });
+                localStorage.setItem("token", data.access_token);
+                window.location.href = "dashboard.html";
+            } catch (err) {
+                showError(err.message, "error-msg");
+                errorMsg.classList.remove("hidden");
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Склад - ТссВПН</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="poster-container">
+        <header>
+            <h1>ПРОДОВОЛЬСТВЕННЫЙ СКЛАД</h1>
+        </header>
+
+        <nav>
+            <a href="dashboard.html">Кабинет</a>
+            <a href="keys.html">Ключи</a>
+            <a href="#" onclick="logout(); return false;">Выход</a>
+        </nav>
+
+        <main>
+            <div id="loading" class="h-center">Получение ведомости...</div>
+            <div id="plans-grid" class="shop-grid hidden">
+                <!-- Plans injected here -->
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        checkAuthProtection();
+
+        async function purchase(planId, planName) {
+            if (!confirm(`Подтвердите получение пропуска "${planName}"?`)) return;
+
+            try {
+                await api("/shop/buy", "POST", { plan_id: planId }, true);
+                alert("Пропуск выдан! Проверьте список ключей.");
+                window.location.href = "keys.html";
+            } catch (err) {
+                alert("Ошибка выдачи: " + err.message);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            try {
+                const plans = await api("/shop/plans", "GET", null, true);
+                const grid = document.getElementById("plans-grid");
+                document.getElementById("loading").classList.add("hidden");
+
+                plans.forEach(plan => {
+                    const div = document.createElement("div");
+                    div.className = "plan-card";
+                    div.innerHTML = `
+                        <div class="plan-title">${plan.name}</div>
+                        <div class="plan-price">${plan.price}₽</div>
+                        <p>${plan.description}</p>
+                        <p style="font-size: 0.8rem; margin-top: 10px;">Срок: ${plan.duration_days} дн.</p>
+                        <button onclick="purchase('${plan.id}', '${plan.name}')" style="margin-top: 15px;">ПОЛУЧИТЬ</button>
+                    `;
+                    grid.appendChild(div);
+                });
+                grid.classList.remove("hidden");
+            } catch (err) {
+                showError("Ошибка загрузки планов: " + err.message);
+            }
+        });
+    </script>
+</body>
+
+</html>
