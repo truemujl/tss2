@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,15 +15,17 @@
             background-color: #f0f2f5;
             font-family: Arial, sans-serif;
         }
+
         .container {
             text-align: center;
             padding: 2rem;
             border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             background: white;
             max-width: 400px;
             width: 100%;
         }
+
         #telegram-login-container {
             display: flex;
             justify-content: center;
@@ -30,21 +33,50 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h2>Авторизация через Telegram</h2>
+        <div id="status-message"></div>
         <div id="telegram-login-container">
             <!-- Telegram Login Button will be inserted here -->
+        </div>
+        <div id="debug-log"
+            style="display:none; text-align: left; margin-top: 20px; font-size: 10px; font-family: monospace; border: 1px solid #ccc; padding: 10px; background: #f9f9f9; max-height: 200px; overflow-y: scroll;">
         </div>
     </div>
 
     <script>
+        const statusEl = document.getElementById('status-message');
+        const debugLogEl = document.getElementById('debug-log');
+        const loginContainer = document.getElementById('telegram-login-container');
+
+        // Show debug log only if requested via URL param ?debug=1
+        if (window.location.search.includes('debug=1')) {
+            debugLogEl.style.display = 'block';
+        }
+
+        function log(msg) {
+            console.log(msg);
+            const line = document.createElement('div');
+            line.textContent = new Date().toISOString().split('T')[1].slice(0, -1) + ': ' + msg;
+            debugLogEl.appendChild(line);
+            debugLogEl.scrollTop = debugLogEl.scrollHeight;
+        }
+
         // Функция, которая будет вызвана при успешной аутентификации
         function onTelegramAuth(user) {
-            console.log('Telegram auth success:', user);
-            
+            log('Telegram auth success callback triggered');
+            log('User: ' + JSON.stringify(user));
+
+            statusEl.textContent = 'Авторизация... Пожалуйста, подождите.';
+            statusEl.style.color = '#0088cc';
+            loginContainer.style.display = 'none';
+
             // Отправляем данные на наш backend
-            fetch('/auth/telegram/callback', {
+            log('Sending request to /api/auth/telegram/callback...');
+
+            fetch('/api/auth/telegram/callback', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -59,42 +91,80 @@
                     hash: user.hash
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.access_token) {
-                    // Отправляем токен в родительское окно
-                    window.opener.postMessage({
-                        type: 'TELEGRAM_AUTH_SUCCESS',
-                        token: data.access_token
-                    }, '*');
-                    
-                    // Закрываем всплывающее окно
-                    window.close();
-                } else {
-                    console.error('Auth error:', data);
-                    alert('Ошибка авторизации: ' + (data.detail || JSON.stringify(data)));
-                }
-            })
-            .catch(error => {
-                console.error('Network error:', error);
-                alert('Произошла ошибка при соединении с сервером');
-            });
+                .then(response => {
+                    log('Response status: ' + response.status);
+                    return response.text().then(text => {
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            log('JSON parse error. Raw response: ' + text);
+                            throw new Error('Invalid JSON response from server');
+                        }
+                    });
+                })
+                .then(data => {
+                    log('Data received: ' + JSON.stringify(data));
+                    if (data.access_token) {
+                        statusEl.textContent = 'Успешно! Перенаправление...';
+                        statusEl.style.color = 'green';
+
+                        log('Posting message to opener...');
+                        // Отправляем токен в родительское окно
+                        try {
+                            if (window.opener) {
+                                window.opener.postMessage({
+                                    type: 'TELEGRAM_AUTH_SUCCESS',
+                                    token: data.access_token
+                                }, '*');
+                                log('Message posted. Closing window...');
+                                setTimeout(() => window.close(), 500);
+                            } else {
+                                log('window.opener is null! Cannot authenticate.');
+                                alert('Ошибка: Окно авторизации было открыто некорректно.');
+                            }
+                        } catch (e) {
+                            log('Error posting message: ' + e.message);
+                            alert('Ошибка передачи данных: ' + e.message);
+                        }
+                    } else {
+                        console.error('Auth error:', data);
+                        statusEl.textContent = 'Ошибка авторизации.';
+                        statusEl.style.color = 'red';
+                        alert('Ошибка авторизации: ' + (data.detail || JSON.stringify(data)));
+                        loginContainer.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Network error:', error);
+                    log('Fetch/Network error: ' + error.message);
+                    statusEl.textContent = 'Ошибка сети.';
+                    statusEl.style.color = 'red';
+                    alert('Произошла ошибка при соединении с сервером: ' + error.message);
+                    loginContainer.style.display = 'block';
+                });
         }
 
         // Динамически добавляем виджет Telegram после загрузки страницы
-        window.addEventListener('load', function() {
-            // Создаем элемент script для виджета
-            const script = document.createElement('script');
-            script.src = 'https://telegram.org/js/telegram-widget.js?22';
-            script.setAttribute('data-telegram-login', 'tssvpn_bot');
-            script.setAttribute('data-size', 'large');
-            script.setAttribute('data-request-access', 'write');
-            script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-            script.setAttribute('data-lang', 'ru');
-            script.async = true;
-            
-            document.getElementById('telegram-login-container').appendChild(script);
+        window.addEventListener('load', function () {
+            log('Page loaded. Initializing widget...');
+            try {
+                // Создаем элемент script для виджета
+                const script = document.createElement('script');
+                script.src = 'https://telegram.org/js/telegram-widget.js?22';
+                script.setAttribute('data-telegram-login', 'tssvpn_bot');
+                script.setAttribute('data-size', 'large');
+                script.setAttribute('data-request-access', 'write');
+                script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+                script.setAttribute('data-lang', 'ru');
+                script.async = true;
+
+                document.getElementById('telegram-login-container').appendChild(script);
+                log('Widget script appended.');
+            } catch (e) {
+                log('Error initializing widget: ' + e.message);
+            }
         });
     </script>
 </body>
+
 </html>

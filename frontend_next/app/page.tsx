@@ -11,9 +11,9 @@ import { useRouter } from "next/navigation";
 import { isLoggedIn } from "@/lib/api";
 
 const defaultPlans = [
-  { id: "basic", name: "1 месяц", label: "Пробный", price: 100, features: ["1 устройство", "Скорость до 100 Мбит/с", "Поддержка в Telegram"], popular: false },
-  { id: "standard", name: "3 месяца", label: "Оптимальный", price: 250, features: ["3 устройства", "Скорость до 1 Гбит/с", "Приоритетная поддержка", "Экономия 17%"], popular: true },
-  { id: "premium", name: "12 месяцев", label: "Максимум", price: 900, features: ["5 устройств", "VIP-серверы", "Экономия 25%"], popular: false },
+  { id: "plan_1m_new", name: "1 месяц", label: "Стартовый", price: 99, features: ["10 устройств", "Безлимитный трафик", "Все локации", "Поддержка в Telegram"], popular: false },
+  { id: "plan_3m_new", name: "3 месяца", label: "Оптимальный", price: 249, features: ["10 устройств", "Безлимитный трафик", "Все локации", "Приоритетная поддержка", "Экономия 16%"], popular: true },
+  { id: "plan_1y_new", name: "1 год", label: "Максимум", price: 1000, features: ["10 устройств", "Безлимитный трафик", "Все локации", "VIP-поддержка", "Экономия 16%", "Установка на роутер"], popular: false },
 ];
 
 export default function Home() {
@@ -30,28 +30,25 @@ export default function Home() {
   }, []);
 
   const handleSelectPlan = (planId: string) => {
-    if (isLoggedIn()) {
-      router.push(`/checkout?plan=${planId}`);
-    } else {
-      router.push(`/login?redirect=/checkout?plan=${planId}`);
-    }
+    // Redirect to checkout directly. Login will be requested at the final step.
+    router.push(`/checkout?plan=${planId}`);
   };
 
   // Content fallbacks
-  const hero = content?.hero || { title: "Безопасный VPN для свободного интернета", subtitle: "Тсс! VPN — надёжный сервис для свободного интернета. Работает везде, настраивается за 2 минуты.", ctaText: "Подключить VPN" };
+  const hero = content?.hero || { title: "Ваш надежный узел в свободном интернете", subtitle: "Быстрая настройка VLESS Reality за несколько секунд.", ctaText: "Начать использование", posterImage: "/hero-poster-v1.jpg" };
   const tickerMsg = content?.ticker?.message;
   const features = content?.features;
   const calcTitle = content?.calculator?.title;
   const plans = content?.pricing || defaultPlans;
   const installData = content?.install;
-  const footer = content?.footer || { about: "Быстрый и надёжный VPN для свободного интернета", telegram: "https://t.me/tssvpn", supportTelegram: "https://t.me/tssvpn_support", email: "support@tssvpn.com" };
+  const footer = content?.footer || { about: "Современный VPN для тех, кто ценит приватность и скорость.", telegram: "https://t.me/tssvpn", supportTelegram: "https://t.me/tssvpn_support", email: "support@tssvpn.com" };
   const titles = content?.titles || {
-    features: "Почему выбирают TssVPN",
-    featuresSub: "Современные технологии для вашей безопасности в интернете",
-    pricing: "Тарифы",
-    pricingSub: "Выберите подходящий план. Оплата картой или криптовалютой.",
-    install: "Инструкции по подключению",
-    installSub: "Настройка занимает всего 2 минуты",
+    features: "Особенности TssVPN",
+    featuresSub: "Безопасность и скорость без компромиссов",
+    pricing: "Тарифные планы",
+    pricingSub: "Выберите оптимальный период. Мы принимаем карты и криптовалюты.",
+    install: "База знаний",
+    installSub: "Подключитесь к защищенной сети за считанные минуты",
   };
 
   return (
@@ -61,70 +58,82 @@ export default function Home() {
         title={hero.title}
         subtitle={hero.subtitle}
         ctaText={hero.ctaText}
+        posterImage={hero.posterImage}
       />
-      <Ticker message={tickerMsg} />
+
+      {/* Subtle Ticker */}
+      <div className="bg-white/5 py-4 border-y border-white/5">
+        <Ticker message={tickerMsg || "✦ Оплата картами РФ и СБП ✦ Оплата криптовалютой ✦ Безлимитный трафик ✦ До 10 устройств на любом тарифе ✦ Выбор локации сервера ✦ Установка на роутер ✦ Поддержка 24/7 ✦"} />
+      </div>
 
       {/* Features */}
-      <section id="features" className="py-20 container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-brand-cream mb-4 text-center">
-          {titles.features}
-        </h2>
-        <p className="text-brand-muted text-center mb-12 max-w-2xl mx-auto">
-          {titles.featuresSub}
-        </p>
+      <section id="features" className="py-24 container mx-auto px-6">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
+            {titles.features}
+          </h2>
+          <p className="text-brand-text-dim max-w-2xl mx-auto text-lg">
+            {titles.featuresSub}
+          </p>
+        </div>
         <BentoGrid features={features} />
       </section>
 
-      {/* Calculator */}
-      <section id="calc" className="py-20 bg-brand-dark/50">
-        <div className="container mx-auto px-4">
-          <Calculator title={calcTitle} />
-        </div>
-      </section>
-
       {/* Pricing */}
-      <section id="pricing" className="py-20 container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-brand-cream mb-4 text-center">
-          {titles.pricing}
-        </h2>
-        <p className="text-brand-muted text-center mb-12 max-w-2xl mx-auto">
-          {titles.pricingSub}
-        </p>
+      <section id="pricing" className="py-24 container mx-auto px-6">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
+            {titles.pricing}
+          </h2>
+          <p className="text-brand-text-dim max-w-2xl mx-auto text-lg">
+            {titles.pricingSub}
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {plans.map((plan: any) => (
             <div
               key={plan.id}
-              className={`bg-brand-dark rounded-2xl p-6 transition-all ${plan.popular
-                ? "border-2 border-brand-teal relative box-shadow-soft scale-105"
-                : "border border-brand-teal/20 hover:border-brand-teal/50"
+              className={`glass rounded-[32px] p-10 transition-all duration-500 glass-hover flex flex-col h-full ${plan.popular
+                ? "border-brand-accent/50 relative"
+                : "border-white/5"
                 }`}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-teal text-brand-navy font-bold text-sm px-4 py-1 rounded-full">
-                  Популярный
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-accent text-white font-bold text-xs uppercase tracking-widest px-5 py-2 rounded-full shadow-[0_4px_20px_var(--color-brand-accent-glow)]">
+                  Лучший выбор
                 </div>
               )}
-              <div className={`text-sm mb-2 ${plan.popular ? "text-brand-teal" : "text-brand-muted"}`}>
-                {plan.label}
+              <div className="mb-10">
+                <div className="text-brand-text-dim text-sm font-semibold uppercase tracking-widest mb-4">
+                  {plan.label}
+                </div>
+                <h3 className="text-3xl font-bold text-white mb-6">{plan.name}</h3>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-bold text-white">{plan.price}</span>
+                  <span className="text-xl text-brand-text-dim">₽</span>
+                </div>
               </div>
-              <h3 className="text-2xl font-bold text-brand-cream mb-4">{plan.name}</h3>
-              <div className="text-4xl font-bold text-brand-teal mb-6">{plan.price} ₽</div>
-              <ul className="mb-8 space-y-3 text-sm text-brand-cream/70">
+
+              <ul className="mb-10 space-y-4">
                 {plan.features.map((feature: string, i: number) => (
-                  <li key={i} className={i === 0 && plan.popular ? "text-brand-teal" : ""}>
-                    ✓ {feature}
+                  <li key={i} className="flex items-center gap-3 text-brand-text-dim text-sm">
+                    <span className="w-5 h-5 rounded-full bg-brand-accent/10 text-brand-accent flex items-center justify-center text-[10px]">
+                      ✓
+                    </span>
+                    {feature}
                   </li>
                 ))}
               </ul>
+
               <button
                 onClick={() => handleSelectPlan(plan.id)}
-                className={`w-full font-bold py-3 rounded-lg transition-all ${plan.popular
-                  ? "bg-brand-teal text-brand-navy hover:bg-brand-blue"
-                  : "bg-brand-teal/10 text-brand-teal border border-brand-teal/30 hover:bg-brand-teal hover:text-brand-navy"
+                className={`w-full font-bold py-5 rounded-2xl transition-all duration-300 mt-auto ${plan.popular
+                  ? "bg-brand-accent text-white hover:shadow-[0_0_25px_var(--color-brand-accent-glow)]"
+                  : "bg-white/5 text-white hover:bg-white/10"
                   }`}
               >
-                Выбрать
+                Выбрать план
               </button>
             </div>
           ))}

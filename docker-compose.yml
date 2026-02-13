@@ -1,13 +1,50 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: tssvpn-db
+    environment:
+      POSTGRES_DB: marzban
+      POSTGRES_USER: marzban_user
+      POSTGRES_PASSWORD: marzban_password
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - tssvpn-network
+
+  marzban:
+    image: gozargah/marzban:latest
+    container_name: tssvpn-marzban
+    environment:
+      SUDO_USERNAME: admin
+      SUDO_PASSWORD: admin
+      UVICORN_HOST: 0.0.0.0
+      UVICORN_PORT: 8000
+      UVICORN_SSL_CERTFILE: /etc/letsencrypt/live/tssvpn.com/fullchain.pem
+      UVICORN_SSL_KEYFILE: /etc/letsencrypt/live/tssvpn.com/privkey.pem
+    volumes:
+      - ./marzban_data:/var/lib/marzban
+      - /root/clawd/vless_vk_config.json:/code/xray_config.json
+      - ./certbot/conf:/etc/letsencrypt
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - tssvpn-network
+
   backend:
     build: ./app
     container_name: tss_site_backend
     restart: always
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    volumes:
-      - ./app:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@tssvpn-db:5432/${POSTGRES_DB}
       MARZBAN_URL: ${MARZBAN_URL}
@@ -17,35 +54,43 @@ services:
       SECRET_KEY: ${SECRET_KEY}
     networks:
       - tssvpn-network
+    depends_on:
+      - marzban
 
   frontend_next:
     build: ./frontend_next
     container_name: tss_site_frontend_next
     restart: always
-    command: sh -c "npm run dev"
-    volumes:
-      - ./frontend_next:/app
-      - /app/node_modules
     environment:
       - NEXT_PUBLIC_BOT_USERNAME=${NEXT_PUBLIC_BOT_USERNAME}
       - BACKEND_URL=${BACKEND_URL}
-    # Expose port 3000 internally
     networks:
       - tssvpn-network
+    depends_on:
+      - backend
 
   nginx:
     image: nginx:alpine
     container_name: tss_site_nginx
     restart: always
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     depends_on:
       - backend
       - frontend_next
     networks:
       - tssvpn-network
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
 
 networks:
   tssvpn-network:

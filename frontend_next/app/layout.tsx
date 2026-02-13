@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["cyrillic", "latin"],
-  weight: ["400", "500", "600", "700"],
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin", "cyrillic"],
 });
 
 export const metadata: Metadata = {
-  title: "TssVPN - Надежный VPN",
-  description: "Быстрый и безопасный VPN-сервис. Протокол VLESS/Reality. Настройка за 2 минуты.",
+  title: "TssVPN - Современный и быстрый VPN",
+  description: "Минималистичный, быстрый и безопасный VPN-сервис. Настройка за 2 минуты.",
 };
 
 export default function RootLayout({
@@ -20,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body className={`${montserrat.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} font-sans antialiased gradient-mesh min-h-screen`}>
         {children}
       </body>
     </html>

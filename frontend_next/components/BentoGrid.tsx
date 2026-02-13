@@ -4,24 +4,24 @@ import { Eye, Zap, MonitorSmartphone, ShieldCheck } from "lucide-react";
 
 const defaultFeatures = [
     {
-        title: "Обход блокировок",
-        desc: "Протокол VLESS/Reality невидим для систем блокировки. Доступ к любым сайтам.",
+        title: "Стабильное соединение",
+        desc: "Современный протокол VLESS/Reality обеспечивает надёжное и защищённое подключение в любой сети.",
         icon: Eye,
         colSpan: "col-span-1 md:col-span-2",
     },
     {
-        title: "Высокая скорость",
-        desc: "Серверы до 1 Гбит/с. Подходит для видео 4K и онлайн-игр.",
+        title: "Минимальные задержки",
+        desc: "Серверы с пингом от 5 мс и каналом до 1 Гбит/с. Идеально для видео 4K, звонков и онлайн-игр.",
         icon: Zap,
     },
     {
-        title: "Все устройства",
-        desc: "Один ключ работает на iOS, Android, Windows и Mac.",
+        title: "До 10 устройств",
+        desc: "Один ключ на все платформы: iOS, Android, Windows, macOS и роутеры — без ограничений.",
         icon: MonitorSmartphone,
     },
     {
         title: "Конфиденциальность",
-        desc: "Мы не храним логи подключений. Ваши данные остаются вашими.",
+        desc: "Строгая политика No-Logs. Мы не храним и не передаём данные о подключениях.",
         icon: ShieldCheck,
         colSpan: "col-span-1 md:col-span-2",
     }

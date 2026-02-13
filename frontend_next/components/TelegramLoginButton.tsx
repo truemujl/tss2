@@ -20,7 +20,7 @@ export default function TelegramLoginButton() {
 
   useEffect(() => {
     setIsClient(true);
-    
+
     // Only run on client-side
     if (typeof window !== 'undefined') {
       // Create and inject the Telegram Login script
@@ -29,7 +29,7 @@ export default function TelegramLoginButton() {
       script.async = true;
       script.setAttribute('data-telegram-login', process.env.NEXT_PUBLIC_BOT_USERNAME || 'tssvpn_bot');
       script.setAttribute('data-size', 'large');
-      script.setAttribute('data-auth-url', `${window.location.origin}/api/auth/telegram/callback`);
+      // script.setAttribute('data-auth-url', `${window.location.origin}/api/auth/telegram/callback`);
       script.setAttribute('data-request-access', 'write');
       document.body.appendChild(script);
 
@@ -58,7 +58,7 @@ export default function TelegramLoginButton() {
 
               if (response.ok) {
                 const data = await response.json();
-                
+
                 // Store the token and redirect to dashboard
                 if (data.access_token) {
                   setToken(data.access_token);

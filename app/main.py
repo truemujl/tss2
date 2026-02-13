@@ -80,6 +80,7 @@ class UserProfile(BaseModel):
     balance: float
     status: str
     keys_count: int
+    is_admin: bool
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -100,6 +101,22 @@ class VPNKey(BaseModel):
     name: str
     status: str
     expires_at: str
+
+class SiteConfigUpdate(BaseModel):
+    bot_welcome_message: Optional[str] = None
+    site_title: Optional[str] = None
+    site_announcement: Optional[str] = None
+    support_link: Optional[str] = None
+
+class AdminStats(BaseModel):
+    total_users: int
+    active_subscriptions: int
+    total_revenue: float
+
+class UserUpdate(BaseModel):
+    balance: Optional[float] = None
+    is_admin: Optional[bool] = None
+    is_banned: Optional[bool] = None
 
 @app.get("/")
 async def root():
@@ -174,19 +191,109 @@ def get_current_user_from_token(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
-        user_type: str = payload.get("type")
         if user_id is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
     
-    # Convert user_id to integer if it was stored as string
     try:
         user_id_int = int(user_id)
     except ValueError:
-        raise credentials_exception
+        # If user_id is username (from web login), we might need to look it up 
+        # But based on current logic, most are tg_id
+        return user_id
     
     return user_id_int
+
+async def get_current_admin(current_user_id = Depends(get_current_user_from_token), db: AsyncSession = Depends(get_db)):
+    if isinstance(current_user_id, int):
+        stmt = select(User).where(User.tg_id == current_user_id)
+    else:
+        stmt = select(User).where(User.username == current_user_id)
+        
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+    if not user or not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+# --- ADMIN ENDPOINTS ---
+from sqlalchemy import func
+
+@app.get("/admin/stats", response_model=AdminStats)
+async def get_admin_stats(admin: User = Depends(get_current_admin), db: AsyncSession = Depends(get_db)):
+    user_count_stmt = select(func.count(User.tg_id))
+    user_count = (await db.execute(user_count_stmt)).scalar()
+    
+    active_subs_stmt = select(func.count(Subscription.id)).where(Subscription.expiry_date > datetime.utcnow())
+    active_subs = (await db.execute(active_subs_stmt)).scalar()
+    
+    revenue_stmt = select(func.sum(Transaction.amount)).where(Transaction.status == "Completed")
+    revenue = (await db.execute(revenue_stmt)).scalar() or 0.0
+    
+    return AdminStats(
+        total_users=user_count,
+        active_subscriptions=active_subs,
+        total_revenue=revenue
+    )
+
+@app.get("/admin/users", response_model=List[UserProfile])
+async def get_admin_users(admin: User = Depends(get_current_admin), db: AsyncSession = Depends(get_db)):
+    stmt = select(User).order_by(User.created_at.desc())
+    result = await db.execute(stmt)
+    users = result.scalars().all()
+    
+    profiles = []
+    for user in users:
+        profiles.append(UserProfile(
+            id=user.tg_id or 0,
+            username=user.username or f"user_{user.tg_id}",
+            balance=user.balance,
+            status="Active" if user.tg_id else "Inactive", # Simplified
+            keys_count=0, # Simplified for list
+            is_admin=user.is_admin,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            avatar_url=user.avatar_url,
+            created_at=user.created_at.isoformat() if user.created_at else None
+        ))
+    return profiles
+
+@app.get("/admin/config")
+async def get_site_config(admin: User = Depends(get_current_admin), db: AsyncSession = Depends(get_db)):
+    stmt = select(SiteConfig).limit(1)
+    result = await db.execute(stmt)
+    config = result.scalar_one_or_none()
+    
+    if not config:
+        config = SiteConfig()
+        db.add(config)
+        await db.commit()
+        await db.refresh(config)
+    
+    return config
+
+@app.post("/admin/config")
+async def update_site_config(update: SiteConfigUpdate, admin: User = Depends(get_current_admin), db: AsyncSession = Depends(get_db)):
+    stmt = select(SiteConfig).limit(1)
+    result = await db.execute(stmt)
+    config = result.scalar_one_or_none()
+    
+    if not config:
+        config = SiteConfig()
+        db.add(config)
+    
+    if update.bot_welcome_message is not None:
+        config.bot_welcome_message = update.bot_welcome_message
+    if update.site_title is not None:
+        config.site_title = update.site_title
+    if update.site_announcement is not None:
+        config.site_announcement = update.site_announcement
+    if update.support_link is not None:
+        config.support_link = update.support_link
+        
+    await db.commit()
+    return {"message": "Config updated"}
 
 @app.get("/users/me", response_model=UserProfile)
 async def get_current_user(current_user_id: int = Depends(get_current_user_from_token), db: AsyncSession = Depends(get_db)):
@@ -216,6 +323,7 @@ async def get_current_user(current_user_id: int = Depends(get_current_user_from_
         balance=user.balance,
         status=status,
         keys_count=keys_count,
+        is_admin=user.is_admin,
         first_name=user.first_name,
         last_name=user.last_name,
         avatar_url=user.avatar_url,
@@ -223,12 +331,28 @@ async def get_current_user(current_user_id: int = Depends(get_current_user_from_
     )
 
 @app.get("/users/keys", response_model=List[VPNKey])
-async def get_my_keys():
-    # Mock keys
-    expire_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
-    return [
-        VPNKey(id="key-123", name="Europe Relay 1", status="Active", expires_at=expire_date)
-    ]
+async def get_my_keys(current_user_id: int = Depends(get_current_user_from_token), db: AsyncSession = Depends(get_db)):
+    # Fetch real subscriptions
+    stmt = select(Subscription).where(Subscription.user_id == current_user_id).order_by(Subscription.expiry_date.desc())
+    result = await db.execute(stmt)
+    subscriptions = result.scalars().all()
+    
+    keys = []
+    now = datetime.now()
+    
+    for sub in subscriptions:
+        status_str = "Expired"
+        if sub.expiry_date > now:
+            status_str = "Active"
+            
+        keys.append(VPNKey(
+            id=str(sub.id),
+            name=sub.tariff_name,
+            status=status_str,
+            expires_at=sub.expiry_date.strftime("%Y-%m-%d")
+        ))
+        
+    return keys
 
 # --- SHOP STUBS ---
 @app.get("/shop/plans", response_model=List[VPNPlan])

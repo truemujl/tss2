@@ -18,6 +18,7 @@ class User(Base):
     password_hash = Column(String, nullable=True)  # For web authentication
     is_verified = Column(Boolean, default=False)  # Email verification
     last_login = Column(DateTime, nullable=True)  # Last login timestamp
+    is_admin = Column(Boolean, default=False)    # Admin access flag
 
     subscriptions = relationship("Subscription", back_populates="user")
     transactions = relationship("Transaction", back_populates="user")
@@ -32,6 +33,15 @@ class Subscription(Base):
     config_link = Column(String)
 
     user = relationship("User", back_populates="subscriptions")
+
+class SiteConfig(Base):
+    __tablename__ = "site_configs"
+
+    id = Column(Integer, primary_key=True)
+    bot_welcome_message = Column(String, default="Здравствуйте! Ваш доступ в свободный интернет под надежной защитой TssVPN.")
+    site_title = Column(String, default="TssVPN - Надежный VPN сервис")
+    site_announcement = Column(String, nullable=True)
+    support_link = Column(String, default="https://t.me/tssvpn_support_bot")
 
 class Server(Base):
     __tablename__ = "servers"

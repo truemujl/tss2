@@ -71,6 +71,19 @@ async def create_or_update_user_in_backend(user_info):
         logging.error(f"Error preparing user data: {e}")
         return None
 
+async def get_site_config():
+    """Fetch site configuration from backend."""
+    if not BACKEND_URL:
+        return None
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{BACKEND_URL}/admin/config") as response:
+                if response.status == 200:
+                    return await response.json()
+    except Exception as e:
+        logging.error(f"Error fetching site config: {e}")
+    return None
+
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     """
@@ -80,15 +93,27 @@ async def command_start_handler(message: Message) -> None:
     command_parts = message.text.split('_')
     if len(command_parts) > 1 and command_parts[0] == '/start login':
         # This is a login request from the website
-        login_url = f"{os.getenv('FRONTEND_URL', 'http://n8n.kavada.ru:8080')}/login"
+        login_url = f"{os.getenv('FRONTEND_URL', 'https://tssvpn.com')}/login"
         await message.answer(
-            f"Товарищ {message.from_user.full_name}, для завершения авторизации на сайте перейдите по ссылке:\n\n{login_url}\n\n"
-            f"Нажмите на кнопку 'Войти через Telegram' и подтвердите авторизацию."
+            f"Для завершения авторизации на сайте перейдите по ссылке:\n\n{login_url}\n\n"
+            f"Нажмите на кнопку 'Войти через Telegram' и подтвердите своё действие."
         )
         return
     
-    # Regular start command
-    greeting_text = f"Товарищ {message.from_user.full_name}, твоя связь под защитой! ☭\n\nИспользуй меню для управления подписками."
+    # Fetch dynamic welcome message
+    config = await get_site_config()
+    greeting_text = config.get("bot_welcome_message") if config else None
+    
+    if not greeting_text:
+        greeting_text = (
+            f"Здравствуйте, {message.from_user.first_name}!\n\n"
+            "Ваш доступ в свободный интернет под надежной защитой TssVPN.\n\n"
+            "Используйте кнопки меню для управления профилем и тарифами."
+        )
+    else:
+        # Simple placeholder replacement if needed
+        greeting_text = greeting_text.replace("{name}", message.from_user.first_name)
+
     await message.answer(greeting_text)
 
 
@@ -97,9 +122,9 @@ async def handle_login_request(message: Message) -> None:
     """
     Handle direct login requests
     """
-    login_url = f"{os.getenv('FRONTEND_URL', 'http://n8n.kavada.ru:8080')}/login"
+    login_url = f"{os.getenv('FRONTEND_URL', 'https://tssvpn.com')}/login"
     await message.answer(
-        f"Товарищ {message.from_user.full_name}, для авторизации на сайте перейдите по ссылке:\n\n{login_url}\n\n"
+        f"Для авторизации на сайте перейдите по ссылке:\n\n{login_url}\n\n"
         f"Нажмите на кнопку 'Войти через Telegram' и подтвердите авторизацию."
     )
 
@@ -110,6 +135,9 @@ async def main() -> None:
         return
         
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    
+    # We don't need to fetch config here, we fetch it per request or could cache it
+    
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

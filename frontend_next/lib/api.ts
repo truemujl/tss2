@@ -13,6 +13,10 @@ export interface UserProfile {
     balance: number;
     status: string;
     keys_count: number;
+    is_admin: boolean;
+    avatar_url?: string;
+    first_name?: string;
+    last_name?: string;
 }
 
 export interface VPNPlan {
@@ -21,6 +25,19 @@ export interface VPNPlan {
     duration_days: number;
     price: number;
     description: string;
+}
+
+export interface AdminStats {
+    total_users: number;
+    active_subscriptions: number;
+    total_revenue: number;
+}
+
+export interface SiteConfig {
+    bot_welcome_message: string;
+    site_title: string;
+    site_announcement?: string;
+    support_link: string;
 }
 
 // Token management
@@ -94,6 +111,26 @@ export async function getProfile(): Promise<UserProfile> {
     return apiRequest("/users/me");
 }
 
+// Admin API
+export async function getAdminStats(): Promise<AdminStats> {
+    return apiRequest("/admin/stats");
+}
+
+export async function getAdminUsers(): Promise<UserProfile[]> {
+    return apiRequest("/admin/users");
+}
+
+export async function getSiteConfig(): Promise<SiteConfig> {
+    return apiRequest("/admin/config");
+}
+
+export async function updateSiteConfig(config: Partial<SiteConfig>): Promise<{ message: string }> {
+    return apiRequest("/admin/config", {
+        method: "POST",
+        body: JSON.stringify(config),
+    });
+}
+
 // Shop API
 export async function getPlans(): Promise<VPNPlan[]> {
     return apiRequest("/shop/plans");
@@ -104,4 +141,61 @@ export async function purchasePlan(planId: string): Promise<{ message: string }>
         method: "POST",
         body: JSON.stringify({ plan_id: planId }),
     });
+}
+
+export interface VPNKey {
+    id: string;
+    name: string;
+    status: string;
+    expires_at: string;
+}
+
+export async function getKeys(): Promise<VPNKey[]> {
+    return apiRequest("/users/keys");
+}
+
+// Payment API
+export interface CreatePaymentRequest {
+    user_id: number;
+    plan_id: string;
+    amount: number;
+    location: string;
+    currency: string;
+    source: string;
+}
+
+export interface CreatePaymentResponse {
+    payment_url: string;
+    transaction_id: string;
+    amount: number;
+}
+
+export interface PaymentStatusResponse {
+    status: string; // PENDING | CONFIRMED | CANCELED | FAIL
+    plan_id: string;
+}
+
+export async function createPayment(
+    userId: number,
+    planId: string,
+    amount: number,
+    location: string
+): Promise<CreatePaymentResponse> {
+    return apiRequest("/payments/create", {
+        method: "POST",
+        body: JSON.stringify({
+            user_id: userId,
+            plan_id: planId,
+            amount,
+            location,
+            currency: "RUB",
+            source: "web",
+        }),
+    });
+}
+
+export async function checkPaymentStatus(
+    transactionId: string
+): Promise<PaymentStatusResponse> {
+    return apiRequest(`/payments/status/${transactionId}`);
 }
